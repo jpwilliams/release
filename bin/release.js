@@ -172,21 +172,6 @@ const orderCommits = (commits, tags, exists) => {
     // Upload changelog to GitHub Releases
     createRelease(tags[0].version, changelog, exists, releaseName)
   })
-
-  inquirer.prompt(commitQuestions).then(types => {
-    // Update the spinner status
-    console.log('')
-    handleSpinner.create('Generating the changelog')
-
-    commitTypes = types
-
-    const results = Object.assign({}, predefined, types)
-    const grouped = groupChanges(results, changeTypes)
-    const changelog = createChangelog(grouped, commits, changeTypes)
-
-    // Upload changelog to GitHub Releases
-    createRelease(tags[0].version, changelog, exists)
-  })
 }
 
 const collectChanges = (tags, exists = false) => {
