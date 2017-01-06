@@ -34,17 +34,17 @@ let repoDetails
 const changeTypes = [
   {
     handle: 'major',
-    name: 'Major Change',
+    name: 'Breaking changes',
     description: 'incompatible API change'
   },
   {
     handle: 'minor',
-    name: 'Minor Change',
+    name: 'New features',
     description: 'backwards-compatible functionality'
   },
   {
     handle: 'patch',
-    name: 'Patch',
+    name: 'Bug fixes / generic changes',
     description: 'backwards-compatible bug fix'
   }
 ]
