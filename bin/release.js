@@ -82,23 +82,21 @@ const createRelease = (tagName, changelog, exists, releaseName) => {
     body.id = exists
   }
 
-  console.log(body)
+  githubConnection.repos[method](body, (err, response) => {
+    if (err) {
+      console.log('\n')
+      handleSpinner.fail('Failed to upload release.')
+    }
 
-  // githubConnection.repos[method](body, (err, response) => {
-  //   if (err) {
-  //     console.log('\n')
-  //     handleSpinner.fail('Failed to upload release.')
-  //   }
+    global.spinner.succeed()
+    const releaseURL = getReleaseURL(response, true)
 
-  //   global.spinner.succeed()
-  //   const releaseURL = getReleaseURL(response, true)
+    if (releaseURL) {
+      open(releaseURL)
+    }
 
-  //   if (releaseURL) {
-  //     open(releaseURL)
-  //   }
-
-  //   console.log(`\n${chalk.bold('Done!')} 🎉 Opening release in browser...`)
-  // })
+    console.log(`\n${chalk.bold('Done!')} 🎉 Opening release in browser...`)
+  })
 }
 
 const orderCommits = (commits, tags, exists) => {
