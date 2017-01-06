@@ -61,7 +61,7 @@ const getReleaseURL = (release, edit = false) => {
   return edit ? htmlURL.replace('/tag/', '/edit/') : htmlURL
 }
 
-const createRelease = (tag_name, changelog, exists) => {
+const createRelease = (tagName, changelog, exists, releaseName) => {
   const isPre = flags.pre ? 'pre' : ''
   handleSpinner.create(`Uploading ${isPre}release`)
 
@@ -71,35 +71,38 @@ const createRelease = (tag_name, changelog, exists) => {
   const body = {
     owner: repoDetails.user,
     repo: repoDetails.repo,
-    tag_name,
+    tagName,
     body: changelog,
     draft: true,
-    prerelease: flags.pre
+    prerelease: flags.pre,
+    name: releaseName
   }
 
   if (exists) {
     body.id = exists
   }
 
-  githubConnection.repos[method](body, (err, response) => {
-    if (err) {
-      console.log('\n')
-      handleSpinner.fail('Failed to upload release.')
-    }
+  console.log(body)
 
-    global.spinner.succeed()
-    const releaseURL = getReleaseURL(response, true)
+  // githubConnection.repos[method](body, (err, response) => {
+  //   if (err) {
+  //     console.log('\n')
+  //     handleSpinner.fail('Failed to upload release.')
+  //   }
 
-    if (releaseURL) {
-      open(releaseURL)
-    }
+  //   global.spinner.succeed()
+  //   const releaseURL = getReleaseURL(response, true)
 
-    console.log(`\n${chalk.bold('Done!')} 🎉 Opening release in browser...`)
-  })
+  //   if (releaseURL) {
+  //     open(releaseURL)
+  //   }
+
+  //   console.log(`\n${chalk.bold('Done!')} 🎉 Opening release in browser...`)
+  // })
 }
 
 const orderCommits = (commits, tags, exists) => {
-  const questions = []
+  const commitQuestions = []
   const predefined = {}
 
   const choices = getChoices(changeTypes, tags)
@@ -118,7 +121,7 @@ const orderCommits = (commits, tags, exists) => {
       continue
     }
 
-    questions.push({
+    commitQuestions.push({
       name: commit.hash,
       message: commit.title,
       type: 'list',
@@ -134,10 +137,48 @@ const orderCommits = (commits, tags, exists) => {
 
   console.log(`${chalk.green('!')} Please enter the type of change for each commit:\n`)
 
-  inquirer.prompt(questions).then(types => {
+  let releaseName
+  let commitTypes
+  let overview
+
+  inquirer.prompt({
+    type: 'input',
+    name: 'releaseName',
+    message: 'Release name',
+    default: `Release v${tags[0].version}`
+  }).then((input) => {
+    releaseName = input.releaseName
+
+    return inquirer.prompt(commitQuestions)
+  }).then((types) => {
+    commitTypes = types
+
+    return inquirer.prompt({
+      type: 'editor',
+      name: 'overview',
+      message: 'Enter a description or bullet-point list that outlines this release.'
+    })
+  }).then((input) => {
+    overview = input.overview
+
     // Update the spinner status
     console.log('')
     handleSpinner.create('Generating the changelog')
+
+    const results = Object.assign({}, predefined, commitTypes)
+    const grouped = groupChanges(results, changeTypes)
+    const changelog = createChangelog(grouped, commits, changeTypes, overview)
+
+    // Upload changelog to GitHub Releases
+    createRelease(tags[0].version, changelog, exists, releaseName)
+  })
+
+  inquirer.prompt(commitQuestions).then(types => {
+    // Update the spinner status
+    console.log('')
+    handleSpinner.create('Generating the changelog')
+
+    commitTypes = types
 
     const results = Object.assign({}, predefined, types)
     const grouped = groupChanges(results, changeTypes)
