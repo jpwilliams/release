@@ -71,7 +71,7 @@ const createRelease = (tagName, changelog, exists, releaseName) => {
   const body = {
     owner: repoDetails.user,
     repo: repoDetails.repo,
-    tagName,
+    tag_name: tagName,
     body: changelog,
     draft: true,
     prerelease: flags.pre,
